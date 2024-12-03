@@ -21,8 +21,16 @@ class SpotifyClient {
 		const response = await axios.get("https://api.spotify.com/v1/playlists/5SLPaOxQyJ8Ne9zpmTOvSe/tracks", {
 			headers: { Authorization: "Bearer " + this.token },
 		});
-		return response.data
+		return response.data;
 	}
+
+	async searchSongs(keyword) {
+		const response = await axios.get("https://api.spotify.com/v1/search", {
+			headers: { Authorization: "Bearer " + this.token },
+			params: {q: keyword, type: "track"},
+		});
+		return response.data.tracks;
+	} 
 }
 
 const spotify =  await SpotifyClient.initialize();
