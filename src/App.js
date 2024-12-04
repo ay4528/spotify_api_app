@@ -3,6 +3,9 @@ import { SongList } from "./components/SongList";
 import spotify from "./lib/spotify";
 import { Player } from "./components/Player";
 import { SearchInput } from "./components/SearchInput";
+import { Pagination } from "./components/Pagination";
+
+const limit = 20;
 
 export default function App() {
 	const [isLoading, setIsLoding] = useState(false);
@@ -11,6 +14,9 @@ export default function App() {
 	const [selectedSong, setSelectedSong] = useState();
 	const [keyword, setKeyword] = useState("");
 	const [searchedSongs, setSearchedSongs] = useState();
+	const [page, setPage] = useState(1);
+	const [hasNext, setHasNext] = useState(false);
+	const [hasPrev, setHasPrev] = useState(false);
 	const audioRef = useRef(null);
 	const isSearchedResult = searchedSongs != null;
 
@@ -60,11 +66,26 @@ export default function App() {
 		setKeyword(e.target.value);
 	};
 
-	const searchSongs = async () => {
+	const searchSongs = async (page) => {
 		setIsLoding(true);
-		const result = await spotify.searchSongs(keyword);
+		const offset = parseInt(page) ? (parseInt(page) - 1) * limit : 0;
+		const result = await spotify.searchSongs(keyword, limit, offset);
+		setHasNext(result.next != null);
+		setHasPrev(result.previous != null);
 		setSearchedSongs(result.items);
 		setIsLoding(false);
+	};
+
+	const moveToNext = async () => {
+		const nextPage = page + 1;
+		await searchSongs(nextPage);
+		setPage(nextPage);
+	};
+
+	const moveToPrev = async () => {
+		const prevPage = page - 1;
+		await searchSongs(prevPage);
+		setPage(prevPage);
 	};
 
 	return (
@@ -77,6 +98,7 @@ export default function App() {
 				<section>
 					<h2 className="text-2xl font-semibold mb-5">{isSearchedResult ? "Searched Results" : "Popular Songs"}</h2>
 					<SongList isLoading={isLoading} songs={isSearchedResult ? searchedSongs : popularSongs} onSongSelected={handleSongSelected} />
+					{isSearchedResult && <Pagination onPrev={hasPrev ? moveToPrev : null} onNext={hasNext ? moveToNext : null} />}
 				</section>
 			</main>
 			{selectedSong != null && <Player song={selectedSong} isPlay={isPlay} onButtonClick={toggleSong} />}
